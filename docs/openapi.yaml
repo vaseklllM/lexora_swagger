@@ -155,6 +155,199 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /decks:
+    get:
+      summary: Get all decks
+      description: Returns a list of all user's decks with pagination
+      tags:
+        - Decks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of decks per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        "200":
+          description: Successfully retrieved decks list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  decks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Deck"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /deck:
+    post:
+      summary: Create new deck
+      description: Creates a new deck for the authenticated user
+      tags:
+        - Decks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDeckRequest"
+      responses:
+        "201":
+          description: Deck successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deck"
+        "400":
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /deck/{id}:
+    get:
+      summary: Get deck by ID
+      description: Returns information about a specific deck
+      tags:
+        - Decks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Deck ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successfully retrieved deck
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deck"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Deck not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update deck
+      description: Updates deck information
+      tags:
+        - Decks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Deck ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDeckRequest"
+      responses:
+        "200":
+          description: Deck successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deck"
+        "400":
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Deck not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete deck
+      description: Deletes a deck from the system
+      tags:
+        - Decks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Deck ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deck successfully deleted
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Deck not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   schemas:
     User:
@@ -339,6 +532,114 @@ components:
           description: Token expiration time in seconds
           example: 3600
 
+    Deck:
+      type: object
+      required:
+        - id
+        - name
+        - userId
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique deck identifier
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        name:
+          type: string
+          description: Deck name
+          example: "English Vocabulary"
+        description:
+          type: string
+          description: Deck description
+          example: "Common English words for beginners"
+        userId:
+          type: string
+          format: uuid
+          description: ID of the deck owner
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        isPublic:
+          type: boolean
+          description: Whether deck is public or private
+          default: false
+          example: false
+        cardCount:
+          type: integer
+          description: Number of cards in the deck
+          minimum: 0
+          example: 25
+        createdAt:
+          type: string
+          format: date-time
+          description: Deck creation date
+          example: "2023-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update date
+          example: "2023-01-01T00:00:00Z"
+
+    CreateDeckRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Deck name
+          minLength: 1
+          maxLength: 100
+          example: "English Vocabulary"
+        description:
+          type: string
+          description: Deck description
+          maxLength: 500
+          example: "Common English words for beginners"
+        isPublic:
+          type: boolean
+          description: Whether deck should be public or private
+          default: false
+          example: false
+
+    UpdateDeckRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Deck name
+          minLength: 1
+          maxLength: 100
+          example: "English Vocabulary"
+        description:
+          type: string
+          description: Deck description
+          maxLength: 500
+          example: "Common English words for beginners"
+        isPublic:
+          type: boolean
+          description: Whether deck should be public or private
+          example: false
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        total:
+          type: integer
+          description: Total number of items
+          example: 100
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 10
+
     Error:
       type: object
       required:
@@ -374,3 +675,5 @@ security:
 tags:
   - name: Authentication
     description: User authentication and registration operations
+  - name: Decks
+    description: Deck management operations

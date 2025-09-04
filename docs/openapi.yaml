@@ -348,6 +348,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /languages:
+    get:
+      summary: Get available languages
+      description: Returns a list of all available languages for deck creation
+      tags:
+        - Languages
+      responses:
+        "200":
+          description: Successfully retrieved languages list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  languages:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Language"
+
 components:
   schemas:
     User:
@@ -538,6 +557,7 @@ components:
         - id
         - name
         - userId
+        - languageCode
         - createdAt
       properties:
         id:
@@ -558,6 +578,12 @@ components:
           format: uuid
           description: ID of the deck owner
           example: "550e8400-e29b-41d4-a716-446655440000"
+        languageCode:
+          type: string
+          description: Language code for the deck (ISO 639-1)
+          example: "en"
+          minLength: 2
+          maxLength: 2
         cardCount:
           type: integer
           description: Number of cards in the deck
@@ -578,6 +604,7 @@ components:
       type: object
       required:
         - name
+        - languageCode
       properties:
         name:
           type: string
@@ -590,6 +617,12 @@ components:
           description: Deck description
           maxLength: 500
           example: "Common English words for beginners"
+        languageCode:
+          type: string
+          description: Language code for the deck (ISO 639-1)
+          example: "en"
+          minLength: 2
+          maxLength: 2
 
     UpdateDeckRequest:
       type: object
@@ -605,6 +638,12 @@ components:
           description: Deck description
           maxLength: 500
           example: "Common English words for beginners"
+        languageCode:
+          type: string
+          description: Language code for the deck (ISO 639-1)
+          example: "en"
+          minLength: 2
+          maxLength: 2
 
     Pagination:
       type: object
@@ -625,6 +664,33 @@ components:
           type: integer
           description: Total number of pages
           example: 10
+
+    Language:
+      type: object
+      required:
+        - code
+        - name
+        - icon
+      properties:
+        code:
+          type: string
+          description: Language code (ISO 639-1)
+          example: "en"
+          minLength: 2
+          maxLength: 2
+        name:
+          type: string
+          description: Language name
+          example: "English"
+        nativeName:
+          type: string
+          description: Language name in native language
+          example: "English"
+        icon:
+          type: string
+          format: uri
+          description: URL to language flag icon
+          example: "https://flagcdn.com/w20/us.png"
 
     Error:
       type: object
@@ -663,3 +729,5 @@ tags:
     description: User authentication and registration operations
   - name: Decks
     description: Deck management operations
+  - name: Languages
+    description: Available languages for deck creation

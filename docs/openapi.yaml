@@ -567,6 +567,212 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /folders:
+    get:
+      summary: Get all folders
+      description: Returns a list of all user's folders with optional filtering by parent folder and pagination
+      tags:
+        - Folders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: parentFolderId
+          in: query
+          description: Filter folders by parent folder ID (optional, null for root folders)
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of folders per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        "200":
+          description: Successfully retrieved folders list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  folders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Folder"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /folder:
+    post:
+      summary: Create new folder
+      description: Creates a new folder and optionally assigns it to a parent folder
+      tags:
+        - Folders
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFolderRequest"
+      responses:
+        "201":
+          description: Folder successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+        "400":
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /folder/{folderId}:
+    get:
+      summary: Get folder by ID
+      description: Returns information about a specific folder
+      tags:
+        - Folders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: folderId
+          in: path
+          required: true
+          description: Folder ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successfully retrieved folder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Folder not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update folder
+      description: Updates folder information
+      tags:
+        - Folders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: folderId
+          in: path
+          required: true
+          description: Folder ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFolderRequest"
+      responses:
+        "200":
+          description: Folder successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+        "400":
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Folder not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete folder
+      description: Deletes a folder from the system (must be empty)
+      tags:
+        - Folders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: folderId
+          in: path
+          required: true
+          description: Folder ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Folder successfully deleted
+        "400":
+          description: Bad request - folder is not empty
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Folder not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   schemas:
     User:
@@ -789,6 +995,11 @@ components:
           format: uuid
           description: ID of the parent deck (null for root decks)
           example: null
+        folderId:
+          type: string
+          format: uuid
+          description: ID of the folder this deck belongs to (optional)
+          example: "550e8400-e29b-41d4-a716-446655440003"
         cardCount:
           type: integer
           description: Number of cards in the deck
@@ -838,6 +1049,11 @@ components:
           format: uuid
           description: ID of the parent deck (optional, for nested decks)
           example: "550e8400-e29b-41d4-a716-446655440001"
+        folderId:
+          type: string
+          format: uuid
+          description: ID of the folder to place this deck in (optional)
+          example: "550e8400-e29b-41d4-a716-446655440003"
 
     UpdateDeckRequest:
       type: object
@@ -859,6 +1075,11 @@ components:
           example: "en"
           minLength: 2
           maxLength: 2
+        folderId:
+          type: string
+          format: uuid
+          description: ID of the folder to move this deck to (optional)
+          example: "550e8400-e29b-41d4-a716-446655440003"
 
     Pagination:
       type: object
@@ -906,6 +1127,86 @@ components:
           format: uri
           description: URL to language flag icon
           example: "https://flagcdn.com/w20/us.png"
+
+    Folder:
+      type: object
+      required:
+        - id
+        - name
+        - userId
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique folder identifier
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        name:
+          type: string
+          description: Folder name
+          example: "English Learning"
+        userId:
+          type: string
+          format: uuid
+          description: ID of the folder owner
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        parentFolderId:
+          type: string
+          format: uuid
+          description: ID of the parent folder (null for root folders)
+          example: null
+        deckCount:
+          type: integer
+          description: Number of decks in this folder
+          minimum: 0
+          example: 5
+        subfolderCount:
+          type: integer
+          description: Number of nested folders inside this folder
+          minimum: 0
+          example: 2
+        createdAt:
+          type: string
+          format: date-time
+          description: Folder creation date
+          example: "2023-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update date
+          example: "2023-01-01T00:00:00Z"
+
+    CreateFolderRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Folder name
+          minLength: 1
+          maxLength: 100
+          example: "English Learning"
+        parentFolderId:
+          type: string
+          format: uuid
+          description: ID of the parent folder (optional, for nested folders)
+          example: "550e8400-e29b-41d4-a716-446655440003"
+
+    UpdateFolderRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Folder name
+          minLength: 1
+          maxLength: 100
+          example: "English Learning"
+        parentFolderId:
+          type: string
+          format: uuid
+          description: ID of the parent folder to move this folder to (optional)
+          example: "550e8400-e29b-41d4-a716-446655440003"
 
     Card:
       type: object
@@ -1054,6 +1355,8 @@ security:
 tags:
   - name: Authentication
     description: User authentication and registration operations
+  - name: Folders
+    description: Folder management operations for organizing decks
   - name: Decks
     description: Deck management operations
   - name: Languages

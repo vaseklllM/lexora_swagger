@@ -558,11 +558,6 @@ components:
           format: uuid
           description: ID of the deck owner
           example: "550e8400-e29b-41d4-a716-446655440000"
-        isPublic:
-          type: boolean
-          description: Whether deck is public or private
-          default: false
-          example: false
         cardCount:
           type: integer
           description: Number of cards in the deck
@@ -595,11 +590,6 @@ components:
           description: Deck description
           maxLength: 500
           example: "Common English words for beginners"
-        isPublic:
-          type: boolean
-          description: Whether deck should be public or private
-          default: false
-          example: false
 
     UpdateDeckRequest:
       type: object
@@ -615,10 +605,6 @@ components:
           description: Deck description
           maxLength: 500
           example: "Common English words for beginners"
-        isPublic:
-          type: boolean
-          description: Whether deck should be public or private
-          example: false
 
     Pagination:
       type: object

@@ -1,0 +1,16 @@
+{
+  "name": "lexora_swagger",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "docs:serve": "serve docs -l 5500"
+  },
+  "keywords": [],
+  "author": "vasek",
+  "license": "ISC",
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

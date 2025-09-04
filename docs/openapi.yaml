@@ -1,0 +1,455 @@
+openapi: 3.1.0
+info:
+  title: Lexora API
+  description: API документація для Lexora додатку
+  version: 0.1.0
+  contact:
+    name: Vasek
+    email: support@lexora.com
+  license:
+    name: ISC
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.lexora.com
+    description: Production server
+
+paths:
+  /users:
+    get:
+      summary: Отримати список користувачів
+      description: Повертає список всіх користувачів системи
+      tags:
+        - Users
+      parameters:
+        - name: page
+          in: query
+          description: Номер сторінки
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Кількість користувачів на сторінці
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        "200":
+          description: Успішно отримано список користувачів
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          description: Неправильний запит
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Внутрішня помилка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Створити нового користувача
+      description: Створює нового користувача в системі
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: Користувач успішно створений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Неправильний запит
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Користувач вже існує
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/{id}:
+    get:
+      summary: Отримати користувача за ID
+      description: Повертає інформацію про конкретного користувача
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID користувача
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Успішно отримано користувача
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Користувача не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Оновити користувача
+      description: Оновлює інформацію про користувача
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID користувача
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Користувач успішно оновлений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Неправильний запит
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Користувача не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Видалити користувача
+      description: Видаляє користувача з системи
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID користувача
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Користувач успішно видалений
+        "404":
+          description: Користувача не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/login:
+    post:
+      summary: Авторизація користувача
+      description: Авторизує користувача та повертає токен доступу
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Успішна авторизація
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Неправильні облікові дані
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/register:
+    post:
+      summary: Реєстрація користувача
+      description: Реєструє нового користувача в системі
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Користувач успішно зареєстрований
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Неправильний запит
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Користувач вже існує
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Унікальний ідентифікатор користувача
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          description: Email адреса користувача
+          example: "user@example.com"
+        name:
+          type: string
+          description: Ім'я користувача
+          example: "Іван Петренко"
+        avatar:
+          type: string
+          format: uri
+          description: URL аватара користувача
+          example: "https://example.com/avatar.jpg"
+        role:
+          type: string
+          enum: [user, admin, moderator]
+          description: Роль користувача
+          example: "user"
+        isActive:
+          type: boolean
+          description: Чи активний користувач
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата створення користувача
+          example: "2023-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Дата останнього оновлення
+          example: "2023-01-01T00:00:00Z"
+
+    CreateUserRequest:
+      type: object
+      required:
+        - email
+        - name
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email адреса користувача
+          example: "user@example.com"
+        name:
+          type: string
+          description: Ім'я користувача
+          example: "Іван Петренко"
+        password:
+          type: string
+          minLength: 8
+          description: Пароль користувача
+          example: "password123"
+        avatar:
+          type: string
+          format: uri
+          description: URL аватара користувача
+          example: "https://example.com/avatar.jpg"
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Ім'я користувача
+          example: "Іван Петренко"
+        avatar:
+          type: string
+          format: uri
+          description: URL аватара користувача
+          example: "https://example.com/avatar.jpg"
+        role:
+          type: string
+          enum: [user, admin, moderator]
+          description: Роль користувача
+          example: "user"
+        isActive:
+          type: boolean
+          description: Чи активний користувач
+          example: true
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email адреса користувача
+          example: "user@example.com"
+        password:
+          type: string
+          description: Пароль користувача
+          example: "password123"
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - name
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email адреса користувача
+          example: "user@example.com"
+        name:
+          type: string
+          description: Ім'я користувача
+          example: "Іван Петренко"
+        password:
+          type: string
+          minLength: 8
+          description: Пароль користувача
+          example: "password123"
+        confirmPassword:
+          type: string
+          minLength: 8
+          description: Підтвердження пароля
+          example: "password123"
+
+    LoginResponse:
+      type: object
+      required:
+        - token
+        - user
+      properties:
+        token:
+          type: string
+          description: JWT токен доступу
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: Токен оновлення
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          $ref: "#/components/schemas/User"
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Поточна сторінка
+          example: 1
+        limit:
+          type: integer
+          description: Кількість елементів на сторінці
+          example: 10
+        total:
+          type: integer
+          description: Загальна кількість елементів
+          example: 100
+        totalPages:
+          type: integer
+          description: Загальна кількість сторінок
+          example: 10
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Код помилки
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Опис помилки
+          example: "Неправильний формат email адреси"
+        details:
+          type: object
+          description: Додаткові деталі помилки
+          additionalProperties: true
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Users
+    description: Операції з користувачами
+  - name: Authentication
+    description: Авторизація та реєстрація

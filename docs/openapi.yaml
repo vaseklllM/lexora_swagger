@@ -773,6 +773,46 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /ai/translate:
+    post:
+      summary: Generate translation with AI
+      description: Generates translation, description, and usage examples for a given word or phrase using AI
+      tags:
+        - AI
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TranslationRequest"
+      responses:
+        "200":
+          description: Successfully generated translation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TranslationResponse"
+        "400":
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   schemas:
     User:
@@ -1354,6 +1394,122 @@ components:
           maximum: 100
           example: 85
 
+    TranslationRequest:
+      type: object
+      required:
+        - text
+        - fromLanguage
+        - toLanguage
+      properties:
+        text:
+          type: string
+          description: Word or phrase to translate
+          minLength: 1
+          maxLength: 500
+          example: "bank"
+        fromLanguage:
+          type: string
+          description: Source language code (ISO 639-1)
+          minLength: 2
+          maxLength: 2
+          example: "en"
+        toLanguage:
+          type: string
+          description: Target language code (ISO 639-1)
+          minLength: 2
+          maxLength: 2
+          example: "uk"
+
+    TranslationResponse:
+      type: object
+      required:
+        - text
+        - variants
+      properties:
+        text:
+          type: string
+          description: Original text that was translated
+          example: "bank"
+        variants:
+          type: array
+          description: List of all possible translation variants with different meanings
+          items:
+            $ref: "#/components/schemas/TranslationVariant"
+
+    TranslationVariant:
+      type: object
+      required:
+        - translation
+        - context
+        - description
+      properties:
+        translation:
+          type: string
+          description: Translation for this specific meaning
+          example: "банк"
+        context:
+          type: object
+          description: Context or meaning in both languages
+          required:
+            - original
+            - translated
+          properties:
+            original:
+              type: string
+              description: Context in original language
+              example: "financial institution"
+            translated:
+              type: string
+              description: Context in target language
+              example: "фінансова установа"
+        description:
+          type: object
+          description: Detailed description in both languages
+          required:
+            - original
+            - translated
+          properties:
+            original:
+              type: string
+              description: Description in original language
+              example: "A financial establishment that uses money deposited by customers for investment"
+            translated:
+              type: string
+              description: Description in target language
+              example: "Фінансова установа, яка використовує гроші, депоновані клієнтами, для інвестицій"
+        partOfSpeech:
+          type: object
+          description: Part of speech in both languages
+          properties:
+            original:
+              type: string
+              description: Part of speech in original language
+              example: "noun"
+            translated:
+              type: string
+              description: Part of speech in target language
+              example: "іменник"
+        examples:
+          type: array
+          description: Usage examples for this specific meaning
+          items:
+            $ref: "#/components/schemas/TranslationExample"
+
+    TranslationExample:
+      type: object
+      required:
+        - original
+        - translated
+      properties:
+        original:
+          type: string
+          description: Example in original language
+          example: "I need to go to the bank"
+        translated:
+          type: string
+          description: Example in target language
+          example: "Мені потрібно йти в банк"
+
     Error:
       type: object
       required:
@@ -1397,3 +1553,5 @@ tags:
     description: Available languages for deck creation
   - name: Cards
     description: Card management operations within decks
+  - name: AI
+    description: AI-powered translation and word analysis services

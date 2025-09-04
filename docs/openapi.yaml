@@ -155,46 +155,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /decks:
+  /dashboard:
     get:
-      summary: Get all decks
-      description: Returns a list of all user's decks with pagination
+      summary: Get dashboard data
+      description: Returns all data needed for the main page - root folders, root decks, and unassigned cards
       tags:
-        - Decks
+        - Dashboard
       security:
         - BearerAuth: []
-      parameters:
-        - name: page
-          in: query
-          description: Page number
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - name: limit
-          in: query
-          description: Number of decks per page
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
       responses:
         "200":
-          description: Successfully retrieved decks list
+          description: Successfully retrieved dashboard data
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  decks:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Deck"
-                  pagination:
-                    $ref: "#/components/schemas/Pagination"
+                $ref: "#/components/schemas/DashboardResponse"
         "401":
           description: Unauthorized - invalid or expired token
           content:
@@ -562,60 +537,6 @@ paths:
                 $ref: "#/components/schemas/Error"
         "404":
           description: Card not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /folders:
-    get:
-      summary: Get all folders
-      description: Returns a list of all user's folders with optional filtering by parent folder and pagination
-      tags:
-        - Folders
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: parentFolderId
-          in: query
-          description: Filter folders by parent folder ID (optional, null for root folders)
-          required: false
-          schema:
-            type: string
-            format: uuid
-        - name: page
-          in: query
-          description: Page number
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - name: limit
-          in: query
-          description: Number of folders per page
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-      responses:
-        "200":
-          description: Successfully retrieved folders list
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  folders:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Folder"
-                  pagination:
-                    $ref: "#/components/schemas/Pagination"
-        "401":
-          description: Unauthorized - invalid or expired token
           content:
             application/json:
               schema:
@@ -1510,6 +1431,51 @@ components:
           description: Example in target language
           example: "Мені потрібно йти в банк"
 
+    DashboardResponse:
+      type: object
+      required:
+        - folders
+        - decks
+        - cards
+      properties:
+        folders:
+          type: array
+          description: Root folders (folders without parent folder)
+          items:
+            $ref: "#/components/schemas/Folder"
+        decks:
+          type: array
+          description: Root decks (decks not in any folder and without parent deck)
+          items:
+            $ref: "#/components/schemas/Deck"
+        cards:
+          type: array
+          description: Unassigned cards (cards not in any deck)
+          items:
+            $ref: "#/components/schemas/Card"
+        stats:
+          type: object
+          description: User statistics
+          properties:
+            totalFolders:
+              type: integer
+              description: Total number of folders
+              example: 5
+            totalDecks:
+              type: integer
+              description: Total number of decks
+              example: 12
+            totalCards:
+              type: integer
+              description: Total number of cards
+              example: 150
+            overallProgress:
+              type: integer
+              description: Overall learning progress (0-100)
+              minimum: 0
+              maximum: 100
+              example: 67
+
     Error:
       type: object
       required:
@@ -1545,6 +1511,8 @@ security:
 tags:
   - name: Authentication
     description: User authentication and registration operations
+  - name: Dashboard
+    description: Main page dashboard with overview of user's content
   - name: Folders
     description: Folder management operations for organizing decks
   - name: Decks

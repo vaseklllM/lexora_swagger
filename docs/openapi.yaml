@@ -1010,6 +1010,13 @@ components:
           description: Number of nested decks inside this deck
           minimum: 0
           example: 3
+        learningProgress:
+          type: integer
+          description: Overall learning progress of this deck (0-100 scale, calculated from cards)
+          minimum: 0
+          maximum: 100
+          default: 0
+          example: 68
         createdAt:
           type: string
           format: date-time
@@ -1165,6 +1172,13 @@ components:
           description: Number of nested folders inside this folder
           minimum: 0
           example: 2
+        learningProgress:
+          type: integer
+          description: Overall learning progress of this folder (0-100 scale, calculated from decks and subfolders)
+          minimum: 0
+          maximum: 100
+          default: 0
+          example: 72
         createdAt:
           type: string
           format: date-time
@@ -1244,6 +1258,13 @@ components:
           format: uuid
           description: ID of the deck this card belongs to
           example: "550e8400-e29b-41d4-a716-446655440001"
+        learningProgress:
+          type: integer
+          description: Learning progress score (0-100 scale)
+          minimum: 0
+          maximum: 100
+          default: 0
+          example: 75
         createdAt:
           type: string
           format: date-time
@@ -1288,6 +1309,13 @@ components:
           format: uuid
           description: ID of the deck to assign this card to (optional)
           example: "550e8400-e29b-41d4-a716-446655440001"
+        learningProgress:
+          type: integer
+          description: Initial learning progress score (0-100 scale, defaults to 0)
+          minimum: 0
+          maximum: 100
+          default: 0
+          example: 0
 
     UpdateCardRequest:
       type: object
@@ -1319,6 +1347,12 @@ components:
           format: uuid
           description: ID of the deck to move this card to (optional)
           example: "550e8400-e29b-41d4-a716-446655440001"
+        learningProgress:
+          type: integer
+          description: Learning progress score (0-100 scale)
+          minimum: 0
+          maximum: 100
+          example: 85
 
     Error:
       type: object

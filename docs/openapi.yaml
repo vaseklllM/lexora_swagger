@@ -367,6 +367,206 @@ paths:
                     items:
                       $ref: "#/components/schemas/Language"
 
+  /cards:
+    get:
+      summary: Get all cards
+      description: Returns a list of all user's cards with optional filtering by deck and pagination
+      tags:
+        - Cards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: deckId
+          in: query
+          description: Filter cards by deck ID (optional)
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of cards per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        "200":
+          description: Successfully retrieved cards list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cards:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Card"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /card:
+    post:
+      summary: Create new card
+      description: Creates a new card and optionally assigns it to a deck
+      tags:
+        - Cards
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCardRequest"
+      responses:
+        "201":
+          description: Card successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+        "400":
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /card/{cardId}:
+    get:
+      summary: Get card by ID
+      description: Returns information about a specific card
+      tags:
+        - Cards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Card ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successfully retrieved card
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update card
+      description: Updates card information
+      tags:
+        - Cards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Card ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCardRequest"
+      responses:
+        "200":
+          description: Card successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+        "400":
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete card
+      description: Deletes a card from the system
+      tags:
+        - Cards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Card ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Card successfully deleted
+        "401":
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   schemas:
     User:
@@ -584,11 +784,21 @@ components:
           example: "en"
           minLength: 2
           maxLength: 2
+        parentDeckId:
+          type: string
+          format: uuid
+          description: ID of the parent deck (null for root decks)
+          example: null
         cardCount:
           type: integer
           description: Number of cards in the deck
           minimum: 0
           example: 25
+        subdeckCount:
+          type: integer
+          description: Number of nested decks inside this deck
+          minimum: 0
+          example: 3
         createdAt:
           type: string
           format: date-time
@@ -623,6 +833,11 @@ components:
           example: "en"
           minLength: 2
           maxLength: 2
+        parentDeckId:
+          type: string
+          format: uuid
+          description: ID of the parent deck (optional, for nested decks)
+          example: "550e8400-e29b-41d4-a716-446655440001"
 
     UpdateDeckRequest:
       type: object
@@ -692,6 +907,118 @@ components:
           description: URL to language flag icon
           example: "https://flagcdn.com/w20/us.png"
 
+    Card:
+      type: object
+      required:
+        - id
+        - front
+        - back
+        - deckId
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique card identifier
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        front:
+          type: string
+          description: Front side of the card (word, phrase, question)
+          example: "Hello"
+        back:
+          type: string
+          description: Back side of the card (translation, answer)
+          example: "Привіт"
+        description:
+          type: string
+          description: Additional description or context
+          example: "Common greeting"
+        image:
+          type: string
+          format: uri
+          description: URL to card image
+          example: "https://example.com/images/hello.jpg"
+        deckId:
+          type: string
+          format: uuid
+          description: ID of the deck this card belongs to
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        createdAt:
+          type: string
+          format: date-time
+          description: Card creation date
+          example: "2023-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update date
+          example: "2023-01-01T00:00:00Z"
+
+    CreateCardRequest:
+      type: object
+      required:
+        - front
+        - back
+      properties:
+        front:
+          type: string
+          description: Front side of the card (word, phrase, question)
+          minLength: 1
+          maxLength: 500
+          example: "Hello"
+        back:
+          type: string
+          description: Back side of the card (translation, answer)
+          minLength: 1
+          maxLength: 500
+          example: "Привіт"
+        description:
+          type: string
+          description: Additional description or context
+          maxLength: 1000
+          example: "Common greeting"
+        image:
+          type: string
+          format: uri
+          description: URL to card image
+          example: "https://example.com/images/hello.jpg"
+        deckId:
+          type: string
+          format: uuid
+          description: ID of the deck to assign this card to (optional)
+          example: "550e8400-e29b-41d4-a716-446655440001"
+
+    UpdateCardRequest:
+      type: object
+      properties:
+        front:
+          type: string
+          description: Front side of the card (word, phrase, question)
+          minLength: 1
+          maxLength: 500
+          example: "Hello"
+        back:
+          type: string
+          description: Back side of the card (translation, answer)
+          minLength: 1
+          maxLength: 500
+          example: "Привіт"
+        description:
+          type: string
+          description: Additional description or context
+          maxLength: 1000
+          example: "Common greeting"
+        image:
+          type: string
+          format: uri
+          description: URL to card image
+          example: "https://example.com/images/hello.jpg"
+        deckId:
+          type: string
+          format: uuid
+          description: ID of the deck to move this card to (optional)
+          example: "550e8400-e29b-41d4-a716-446655440001"
+
     Error:
       type: object
       required:
@@ -731,3 +1058,5 @@ tags:
     description: Deck management operations
   - name: Languages
     description: Available languages for deck creation
+  - name: Cards
+    description: Card management operations within decks
